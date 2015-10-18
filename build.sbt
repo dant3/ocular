@@ -1,4 +1,4 @@
-val commonSettings = androidBuildAar ++ Seq(
+val commonSettings = Seq(
   platformTarget in Android := "android-21",
   typedResources := false,
 
@@ -15,17 +15,51 @@ val commonSettings = androidBuildAar ++ Seq(
 )
 
 lazy val core = (project in file("core")).
+  settings(androidBuildAar: _*).
   settings(commonSettings: _*).
   settings(
     name := "ocular-core",
     description := "Functional Reactive Gui for Android",
     homepage := Some(url("https://github.com/dant3/ocular")),
+    exportJars := true,
     libraryDependencies ++= Seq(
-      "com.android.support" % "support-v4" % "21.0.3"
+      "com.lihaoyi" %% "scalarx" % "0.2.8",
+      "com.typesafe.akka" %% "akka-actor" % "2.3.14",
+      "com.android.support" % "support-v4" % "21.0.3",
+      "com.android.support" % "support-annotations" % "22.2.0"
     )
   )
 
-lazy val root = (project in file(".")).aggregate(core).
+lazy val examples = (project in file("example")).
+  androidBuildWith(core).
+  settings(commonSettings: _*).
+  settings(
+    name := "ocular-example",
+    proguardConfig in Android ++= Seq(
+      "-ignorewarnings",
+      "-keep class scala.Dynamic",
+      "-keepattributes Signature",
+      "-keepattributes InnerClasses",
+      "-keep class akka.actor.Actor$class { *; }",
+      "-keep class akka.actor.LightArrayRevolverScheduler { *; }",
+      "-keep class akka.actor.LocalActorRefProvider { *; }",
+      "-keep class akka.actor.CreatorFunctionConsumer { *; }",
+      "-keep class akka.actor.TypedCreatorFunctionConsumer { *; }",
+      "-keep class akka.dispatch.BoundedDequeBasedMessageQueueSemantics { *; }",
+      "-keep class akka.dispatch.UnboundedMessageQueueSemantics { *; }",
+      "-keep class akka.dispatch.UnboundedDequeBasedMessageQueueSemantics { *; }",
+      "-keep class akka.dispatch.DequeBasedMessageQueueSemantics { *; }",
+      "-keep class akka.dispatch.MultipleConsumerSemantics { *; }",
+      "-keep class akka.actor.LocalActorRefProvider$Guardian { *; }",
+      "-keep class akka.actor.LocalActorRefProvider$SystemGuardian { *; }",
+      "-keep class akka.dispatch.UnboundedMailbox { *; }",
+      "-keep class akka.actor.DefaultSupervisorStrategy { *; }",
+      "-keep class akka.event.Logging$LogExt { *; }"
+    ),
+    dependencyClasspath in Compile ~= { _ filterNot (_.data.getName startsWith "android-support-v4") }
+  )
+
+lazy val root = (project in file(".")).aggregate(core, examples).
   settings(
     name := "ocular"
   )
