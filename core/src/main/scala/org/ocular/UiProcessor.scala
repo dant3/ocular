@@ -2,31 +2,44 @@ package org.ocular
 
 import android.app.Activity
 import android.content.Context
-import android.view.{View, ViewGroup}
+import android.support.annotation.UiThread
+import android.view.View
 import android.widget.{ImageView, LinearLayout, TextView}
+import org.ocular.ui._
+import org.ocular.utils.{Mutable, MainThreadExecutor}
 
 class UiProcessor(activity: Activity) {
-  /*unused*/ private var _viewsSack = None
-  private var _currentDef: UiDef = _
+  /*unused*/ private var _viewsSack = Map[Class[_ <: View], View]
+  private var _currentDef: UiComponent = _
+  private var _previousContentView: Option[View] = None
 
-  def apply(uiDef: UiDef) = {
+  def apply(uiDef: UiComponent) = {
     MainThreadExecutor.execute(updateUi(uiDef))
   }
 
-  private def updateUi(uiDef: UiDef) = new Runnable {
+  @UiThread private def updateUi(uiDef: UiComponent) = new Runnable {
     override def run() = {
-      activity.setContentView(uiDefToView(uiDef, activity))
+      updateContentViewWith(uiDefToView(uiDef, activity))
       _currentDef = uiDef
     }
   }
 
-  private def uiDefToView(uiDef: UiDef, context: Context): View = uiDef match {
-    case VerticalPane(content, expand) ⇒
+  @UiThread private def updateContentViewWith(view: View) = {
+    if (!_previousContentView.exists(_ eq view)) {
+      _previousContentView = Option(view)
+      activity.setContentView(view)
+    }
+  }
+
+  private def uiDefToView(uiDef: UiComponent, context: Context): View = uiDef match {
+    case p @ VerticalPane(content, expand) ⇒
       Mutable.configure(new LinearLayout(context)) { view ⇒ import view._
-        Mutable.configure(Option(getLayoutParams.asInstanceOf[LinearLayout.LayoutParams])) { lp ⇒
-          lp.width = ViewGroup.LayoutParams.MATCH_PARENT
-          lp.height = if (expand) ViewGroup.LayoutParams.MATCH_PARENT else ViewGroup.LayoutParams.WRAP_CONTENT
-        }.foreach(setLayoutParams)
+        val layoutParams = Mutable.configure(Option(getLayoutParams.asInstanceOf[LinearLayout.LayoutParams])) { lp ⇒
+          lp.width = p.width
+          lp.height = p.height
+        }.getOrElse(new LinearLayout.LayoutParams(p.width, p.height))
+        setOrientation(LinearLayout.VERTICAL)
+        setLayoutParams(layoutParams)
         content.map(uiDefToView(_, context)).foreach(addView)
       }
     case Text(string, gravity) ⇒

@@ -1,4 +1,4 @@
-package org.ocular
+package org.ocular.utils
 
 object Mutable {
   def configure[T](mutableValue: T)(configurator: T ⇒ Any) : T = {
