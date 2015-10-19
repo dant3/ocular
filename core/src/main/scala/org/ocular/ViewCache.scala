@@ -1,13 +1,12 @@
 package org.ocular
 
-import android.util.Log
-import android.view.{ViewGroup, View}
-import org.ocular.utils.ObjectSack
+import android.view.{View, ViewGroup}
 import org.ocular.utils.Utils._
+import org.ocular.utils.{Logger, ObjectSack}
 
 import scala.reflect.ClassTag
 
-class ViewCache extends ObjectSack[View] {
+class ViewCache extends ObjectSack[View] with Logger {
   def reuseAs[T <: View](view: View)(implicit classTag: ClassTag[T]): Option[T] = Option(view) match {
     case Some(nonNullView) if nonNullView.getClass == classTag.runtimeClass ⇒
       logViewReuse(nonNullView.getClass)
@@ -37,6 +36,11 @@ class ViewCache extends ObjectSack[View] {
       put(view)
   }
 
-  private def logViewReuse(`class`: Class[_]) = Log.d("OCULAR", "View reused: " + `class`.getName)
-  private def logCacheHit(`class`: Class[_]) = Log.d("OCULAR", "View cache hit: " + `class`.getName)
+  override def put[U <: View](`object`: U): Unit = {
+    log("Cached new view instance " + `object`.getClass.getName)
+    super.put(`object`)
+  }
+
+  private def logViewReuse(`class`: Class[_]) = log("View reused: " + `class`.getName)
+  private def logCacheHit(`class`: Class[_]) = log("View cache hit: " + `class`.getName)
 }
