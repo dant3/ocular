@@ -1,22 +1,27 @@
 package org.ocular.example
 
-import android.R
 import android.app.Activity
 import android.util.Log
 import android.view.View
-import org.ocular.{Gravity, Ocular}
 import org.ocular.ui._
-import rx.core.Rx
+import org.ocular.{Gravity, Ocular}
+import rx.core.{Var, Rx}
 
 class MainActivity extends Activity with Ocular[Activity] {
-  val reactiveTimer: Rx[Int] = RxCounter
+  val currentTime: Rx[Long] = RxClock
+  val checkBoxChecked = Var(false)
 
   override def uiDef = Rx {
     VerticalPane(
       expand = true,
       content = Seq(
-        Image(R.drawable.ic_menu_today),
-        Text("Counter value: " + reactiveTimer(), gravity = Gravity.CENTER)
+        Image(android.R.drawable.ic_menu_today),
+        Text("Time: " + currentTime(), gravity = Gravity.CENTER),
+        CustomCheckbox(
+          checked = checkBoxChecked(),
+          onCheck = checkBoxChecked.update(_),
+          hint = s"Custom checkbox checked: ${checkBoxChecked()}"
+        )
       )
     )
   }

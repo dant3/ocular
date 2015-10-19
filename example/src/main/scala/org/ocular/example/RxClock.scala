@@ -4,10 +4,10 @@ import java.util.concurrent.{TimeUnit, Executors}
 
 import rx.core.Var
 
-object RxCounter extends Var[Int](0, name = "rx-counter") {
+object RxClock extends Var[Long](System.currentTimeMillis(), name = "rx-clock") {
   private val updater = Executors.newSingleThreadScheduledExecutor()
 
   updater.scheduleAtFixedRate(new Runnable {
-    override def run() = update(apply() + 1)
+    override def run() = update(System.currentTimeMillis())
   }, 1, 1, TimeUnit.SECONDS)
 }

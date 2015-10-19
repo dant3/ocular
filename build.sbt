@@ -34,6 +34,11 @@ lazy val examples = (project in file("example")).
   androidBuildWith(core).
   settings(commonSettings: _*).
   settings(
+    libraryDependencies ++= Seq(
+      "com.android.support" % "support-v4" % "21.0.3",
+      "com.android.support" % "appcompat-v7" % "21.0.3",
+      "com.android.support" % "design" % "22.2.0"
+    ),
     name := "ocular-example",
     proguardConfig in Android ++= Seq(
       "-ignorewarnings",
