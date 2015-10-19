@@ -8,8 +8,8 @@ import org.ocular.{Gravity, Ocular}
 import rx.core.{Var, Rx}
 
 class MainActivity extends Activity with Ocular[Activity] {
-  val currentTime: Rx[Long] = RxClock
   val checkBoxChecked = Var(false)
+  val currentTime: Rx[String] = Rx { TimeFormatter(RxClock()) }
 
   override def uiDef = Rx {
     VerticalPane(
